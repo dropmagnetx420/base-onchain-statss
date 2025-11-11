@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Base Onchain Stats Viewer</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #0b0e11;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+    .card {
+      background: #1a1d22;
+      border-radius: 16px;
+      padding: 20px;
+      margin: 15px auto;
+      width: 90%;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #00aaff;
+    }
+    .value {
+      font-size: 1.4em;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌐 Base Onchain Stats</h1>
+
+  <div class="card">
+    <h2>Current Block</h2>
+    <div id="blockNumber" class="value">Loading...</div>
+  </div>
+
+  <div class="card">
+    <h2>Gas Price (Gwei)</h2>
+    <div id="gasPrice" class="value">Loading...</div>
+  </div>
+
+  <div class="card">
+    <h2>Base TVL (USD)</h2>
+    <div id="tvl" class="value">Loading...</div>
+  </div>
+
+  <script>
+    async function fetchData() {
+      try {
+        // Get block number & gas
+        const baseRPC = "https://mainnet.base.org";
+        const response = await fetch(baseRPC, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "eth_blockNumber",
+            params: []
+          })
+        });
+        const data = await response.json();
+        const blockNumber = parseInt(data.result, 16);
+        document.getElementById("blockNumber").textContent = blockNumber.toLocaleString();
+
+        // Gas price
+        const gasResp = await fetch(baseRPC, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 2,
+            method: "eth_gasPrice",
+            params: []
+          })
+        });
+        const gasData = await gasResp.json();
+        const gasPriceGwei = parseInt(gasData.result, 16) / 1e9;
+        document.getElementById("gasPrice").textContent = gasPriceGwei.toFixed(2);
+
+        // TVL from DeFiLlama
+        const tvlResp = await fetch("https://api.llama.fi/chains");
+        const chains = await tvlResp.json();
+        const baseChain = chains.find(c => c.name.toLowerCase() === "base");
+        document.getElementById("tvl").textContent = "$" + baseChain.tvl.toLocaleString();
+
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    fetchData();
+  </script>
+</body>
+</html>
